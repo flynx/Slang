@@ -251,7 +251,6 @@ var NAMESPACE = {
 
 			//console.log(code)
 
-			var res = []
 			code = code
 				// split by strings whitespace and block comments...
 				.split(SPLITTER)
