@@ -13,48 +13,51 @@ Array.prototype.toString = function(){
 
 /*********************************************************************/
 
-function run(context){
+var run =
+function(context){
 
-	context.stack = context.stack == null ? [] : context.stack
+	context.stack = context.stack == null ? 
+		[] 
+		: context.stack
 
 	while(context.code.length > 0){
 
 		var cur = context.code.splice(0, 1)[0]
 
 		// exit...
-		if(typeof(cur) == typeof('abc') && cur == '_exit'){
+		if(typeof(cur) == typeof('abc') 
+				&& cur == '_exit'){
 			return context
 
 		// word
-		} else if(typeof(cur) == typeof('abc') && cur in context.ns){
+		} else if(typeof(cur) == typeof('abc') 
+				&& cur in context.ns){
 			var word = context.ns[cur]
 			// low-level word...
 			if(typeof(word) == typeof(function(){})){
 				var res = context.ns[cur](context)
 
 			// hi-level word...
-			} else if(typeof(word) == typeof([]) && word && word.constructor.name == 'Array'){
+			} else if(typeof(word) == typeof([]) 
+					&& word 
+					&& word.constructor.name == 'Array'){
 				// XXX add isolation with a continuation...
-				context.code.splice.apply(context.code, [0, 0].concat(word))
+				context.code
+					.splice.apply(context.code, [0, 0].concat(word))
 				var res = undefined
 
 			// variable...
 			} else {
-				var res = word
-			}
+				var res = word }
 
-			if(res !== undefined){
-				context.stack.push(res)
-			}
+			res !== undefined
+				&& context.stack.push(res)
 
 		// everything else...
 		} else {
-			context.stack.push(cur)
-		}
-	}
+			context.stack.push(cur) } }
 
-	return context
-}
+	return context }
 
 // XXX make this add '\n' / EOL words to the stream...
 //var SPLITTER = /\s*\([^\)]*\)\s*|\s*--.*[\n$]|\s*"([^"]*)"\s*|\s*'([^']*)'\s*|\s+/m
@@ -90,24 +93,24 @@ var SPLITTER = RegExp([
 
 // helpers...
 // XXX should these skip quoted ends?
-var collect = function(start, end){
+var collect = 
+function(start, end){
 	return function(context){
 		var res = start ? [start] : []
 		var code = context.code
 		var cur = code.shift()
 		res.push(cur)
-		while(cur != end && code.length > 0){
+		while(cur != end 
+				&& code.length > 0){
 			cur = code.shift()
-			res.push(cur)
-		}
-		return res
-	}
-}
-var drop = function(start, end){
+			res.push(cur) }
+		return res } }
+var drop = 
+function(start, end){
 	var collector = collect(start, end)
 	//return function(context){ collector(context) }
-	return function(context){ console.log('XXX', collector(context).join(' ')) }
-}
+	return function(context){ 
+		console.log('XXX', collector(context).join(' ')) } }
 
 
 // pre-processor namespace...
@@ -132,13 +135,13 @@ var PRE_NAMESPACE = {
 		var block = []
 		var code = context.code
 		var cur = code.splice(0, 1)[0]
-		while(cur != ']' && cur != ']]' && code.length > 0){
+		while(cur != ']' 
+				&& cur != ']]' 
+				&& code.length > 0){
 			if(cur == '['){
-				cur = this['['](context)
-			}
+				cur = this['['](context) }
 			block.push(cur)
-			cur = code.splice(0, 1)[0]
-		}
+			cur = code.splice(0, 1)[0] }
 		// we need this to be able to jump out of all the nested blocks, 
 		// thus we'll keep the ']]' in code and remove it explicitly 
 		// later...
@@ -148,16 +151,16 @@ var PRE_NAMESPACE = {
 			// 		...at this point this seems a bit complex...
 			// 		...if there are more than one ']]' in a structure
 			//		this might stop being deterministic...
-			code.splice(0, 0, cur)
-		}
-		if(code.length == 0 && cur != ']' && cur != ']]'){
-			console.error('Did not find expected "]".')
-		} 
-		return block
-	},
+			code.splice(0, 0, cur) }
+		if(code.length == 0 
+				&& cur != ']' 
+				&& cur != ']]'){
+			console.error('Did not find expected "]".') } 
+		return block },
 	// drop the closing words...
 	']]': function(context){},
-	']': function(context){ console.error('Unexpected "]".') },
+	']': function(context){ 
+		console.error('Unexpected "]".') },
 
 	// XXX macros are not recursive...
 	'macro:': function(context){
@@ -166,11 +169,9 @@ var PRE_NAMESPACE = {
 
 		// as we do not have blocks yet we need to manually collect one ;)
 		if(cur[0] == '['){
-			cur = [ this['['](context) ]
-		}
+			cur = [ this['['](context) ] }
 
-		this[ident] = cur[0]
-	},
+		this[ident] = cur[0] },
 
 	// a no op...
 	'\n': function(){ },
@@ -195,8 +196,7 @@ var NAMESPACE = {
 	'_flip': function(context){
 		var stack = context.stack
 		context.stack = context.code.reverse()
-		context.code = stack.reverse()
-	},
+		context.code = stack.reverse() },
 
 	// swap heads of stack and code
 	// ... ns nc -- ...
@@ -211,15 +211,20 @@ var NAMESPACE = {
 		var l = context.stack.length
 
 		// we need to pad e_c and c_c to requested length...
-		s_c = s_c.length < s ? s_c.concat(Array( s - s_c.length )) : s_c
-		c_c = c_c.length < c ? c_c.concat(Array( c - c_c.length )) : c_c
+		s_c = s_c.length < s ? 
+			s_c.concat(Array( s - s_c.length )) 
+			: s_c
+		c_c = c_c.length < c ? 
+			c_c.concat(Array( c - c_c.length )) 
+			: c_c
 
 		// XXX we also need to shove something more sensible in the 
 		// 		padding that undefined...
 
-		context.code.splice.apply(context.code, [0, 0].concat(s_c))
-		context.stack.splice.apply(context.stack, [l, 0].concat(c_c))
-	},
+		context.code
+			.splice.apply(context.code, [0, 0].concat(s_c))
+		context.stack
+			.splice.apply(context.stack, [l, 0].concat(c_c)) },
 
 	// encapsulate stack to a block...
 	// ... -- [ ... ]
@@ -232,8 +237,8 @@ var NAMESPACE = {
 	'b2s': function(context){
 		var c = context.stack.pop()
 		c = c === undefined ? [] : c
-		context.stack.splice.apply(context.stack, [context.stack.length, 0].concat(c))
-	},
+		context.stack
+			.splice.apply(context.stack, [context.stack.length, 0].concat(c)) },
 	'print': function(context){
 		console.log('>>>', context.stack[context.stack.length-1]) },
 
@@ -246,8 +251,7 @@ var NAMESPACE = {
 			// XXX BUG: '"aaa" "bbb"' translates to ['"aaa"', '" "', '"bbb"'] 
 			// 		i.e. quotes w/o whitespace are eaten...
 			if(/^\s*(['"]).*\1\s*$/m.test(code)){
-				code = code.split(/^\s*(['"])(.*)\1\s*$/m)[2]
-			}
+				code = code.split(/^\s*(['"])(.*)\1\s*$/m)[2] }
 
 			//console.log(code)
 
@@ -260,18 +264,14 @@ var NAMESPACE = {
 					if(/^[-+]?[0-9]+\.[0-9]+$/.test(e)){
 						e = parseFloat(e)
 					} else if(/^[-+]?[0-9]+$/.test(e)){
-						e = parseInt(e)
-					}
-					return e
-				})
+						e = parseInt(e) }
+					return e })
 				// remove undefined groups...
 				.filter(function(e){ 
 					// NOTE: in JS 0 == '' is true ;)
-					return e !== undefined && e !== ''
-				})
-		}
-		return code
-	},
+					return e !== undefined 
+						&& e !== '' }) }
+		return code },
 	// pre-process a lexical list...
 	// a -- b
 	'prep': function(context){
@@ -282,18 +282,18 @@ var NAMESPACE = {
 			code: code,
 			ns: context.pre_ns,
 			pre_ns: {},
-		}).stack
-	},
+		}).stack },
 
 	// s c -- s
 	'_exec': function(context){
 		// block...
 		var b = context.stack.pop()
-		if(typeof(b) == typeof([]) && b && b.constructor.name == 'Array'){
+		if(typeof(b) == typeof([]) 
+				&& b 
+				&& b.constructor.name == 'Array'){
 			b = b.slice()
 		} else {
-			b = [ b ]
-		}
+			b = [ b ] }
 		// stack...
 		var s = context.stack.pop()
 		var res = run({
@@ -306,34 +306,28 @@ var NAMESPACE = {
 		// XXX is this the right way to go?
 		context.ns = res.ns
 		context.pre_ns = res.pre_ns
-		return res.stack
-	},
+		return res.stack },
 	// quote - push the next elem as-is to stack...
 	// -- x
 	'\\': function(context){
-		return context.code.splice(0, 1)[0] },
+		return context.code
+			.splice(0, 1)[0] },
 
 	// comparisons and logic...
 	// a b -- c
 	'and': function(context){
 		var b = context.stack.pop()
 		var a = context.stack.pop()
-		if(a){
-			return b
-		} else {
-			return a
-		}
-	},
+		return a ?
+			b
+			: a },
 	// a b -- c
 	'or': function(context){
 		var b = context.stack.pop()
 		var a = context.stack.pop()
-		if(a){
-			return a
-		} else {
-			return b
-		}
-	},
+		return a ?
+			a
+			: b },
 	// x -- b
 	'not': function(context){
 		return !context.stack.pop() },
@@ -388,17 +382,16 @@ var NAMESPACE = {
 	// block/list operations...
 	'block?': function(context){
 		var e = context.stack.pop()
-		return typeof(e) == typeof([]) && e && e.constructor.name == 'Array'
-	},
+		return typeof(e) == typeof([]) 
+			&& e 
+			&& e.constructor.name == 'Array' },
 	// b n -- b e
 	'at': function(context){
 		var i = context.stack.pop()
 		if(i < 0){
 			var l = context.stack[context.stack.length-1]
-			return l[l.length + i]
-		}
-		return context.stack[context.stack.length-1][i]
-	},
+			return l[l.length + i] }
+		return context.stack[context.stack.length-1][i] },
 	// b e n -- b
 	'to': function(context){
 		var i = context.stack.pop()
@@ -407,9 +400,7 @@ var NAMESPACE = {
 			var l = context.stack[context.stack.length-1]
 			l[l.length + i] = e
 		} else {
-			context.stack[context.stack.length-1][i] = e
-		}
-	},
+			context.stack[context.stack.length-1][i] = e } },
 	// b e n -- b
 	'before': function(context){
 		var i = context.stack.pop()
@@ -418,9 +409,7 @@ var NAMESPACE = {
 			var l = context.stack[context.stack.length-1]
 			l.splice(l.length + i, 0, e)
 		} else {
-			context.stack[context.stack.length-1].splice(i, 0, e)
-		}
-	},
+			context.stack[context.stack.length-1].splice(i, 0, e) } },
 	// b -- b e
 	'pop': function(context){
 		return context.stack[context.stack.length-1].pop() },
@@ -446,10 +435,7 @@ var NAMESPACE = {
 				i--
 			} else {
 				b.splice.apply(b, [i, 1].concat(res))
-				i += l - 1
-			}
-		}
-	},
+				i += l - 1 } } },
 
 
 	// object stuff...
@@ -457,8 +443,8 @@ var NAMESPACE = {
 
 	'object?': function(context){
 		var o = context.stack[context.stack.length - 1]
-		return o && o.constructor === Object
-	},
+		return o 
+			&& o.constructor === Object },
 
 	// set item...
 	// o k v -- o
@@ -490,8 +476,7 @@ var NAMESPACE = {
 		var v = o[k]
 		delete o[k]
 
-		return v
-   	},
+		return v },
 
 	// o -- k
 	'keys': function(context){ 
@@ -503,9 +488,10 @@ var NAMESPACE = {
 	'proto!': function(context){
 		var b = context.stack.pop()
 		var a = context.stack.pop()
-		b.__proto__ = a === false ? {}.__proto__ : a
-		return b
-	},
+		b.__proto__ = a === false ? 
+			{}.__proto__ 
+			: a
+		return b },
 
 	// o -- p
 	// XXX what should this be:
@@ -1064,25 +1050,24 @@ run(CONTEXT)
 
 // convenience...
 function _slang(code, context){
-	context = context == null ? CONTEXT : context
-
+	context = context == null ? 
+		CONTEXT 
+		: context
 	context.code = code
-	return run(context).stack
-}
+	return run(context).stack }
 
 
 function slang(code, context){
-	context = context == null ? CONTEXT : context
+	context = context == null ? 
+		CONTEXT 
+		: context
 
-	if(typeof(code) == typeof('abc')){
-		code = [ '\\', code, 'lex', 'prep', 'exec' ]
-	} else {
-		code = [ code, 'prep', 'exec' ]
-	}
+	code = typeof(code) == typeof('abc') ?
+		[ '\\', code, 'lex', 'prep', 'exec' ]
+		: [ code, 'prep', 'exec' ]
 
 	context.code = code
-	return run(context).stack
-}
+	return run(context).stack }
 
 
 
@@ -1098,11 +1083,10 @@ var RS_PRE_NAMESPACE = {
 		var cur = code.splice(0, 1)[0]
 		while(cur != ';' && code.length > 0){
 			line.push(cur)
-			cur = code.splice(0, 1)[0]
-		}
+			cur = code.splice(0, 1)[0] }
 		
-		context.code.splice.apply(context.code, [0, 0].concat(line.reverse()))
-	},
+		context.code
+			.splice.apply(context.code, [0, 0].concat(line.reverse())) },
 
 	'[': PRE_NAMESPACE['['],
 	'macro:': PRE_NAMESPACE['macro:'],
@@ -1121,10 +1105,11 @@ run(RS_CONTEXT)
 RS_CONTEXT.pre_ns = RS_PRE_NAMESPACE
 
 function rslang(code, context){
-	context = context == null ? RS_CONTEXT : context
+	context = context == null ? 
+		RS_CONTEXT 
+		: context
 
-	return slang(code, context)
-}
+	return slang(code, context) }
 //*/
 
 
